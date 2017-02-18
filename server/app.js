@@ -1,3 +1,4 @@
+// modules required for the project
 let express = require('express');
 let path = require('path');
 let favicon = require('serve-favicon');
@@ -5,9 +6,15 @@ let logger = require('morgan');
 let cookieParser = require('cookie-parser');
 let bodyParser = require('body-parser');
 
-// import "mongoose"
-let mongoose = require('mongoose');
+// modules for authentication
+let session = require('express-session');
+let passport = require('passport');
+let passportlocal = require('passport-local');
+let LocalStrategy =  passportlocal.Strategy;
+let flash = require('connect-flash'); // displays errors / login messages
 
+// import "mongoose" - required for DB access
+let mongoose = require('mongoose');
 // URI
 let config = require('./config/db');
 
@@ -36,6 +43,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../client')));
+
+// setup session
+app.use(session({
+  secret: "SomeSecret",
+  saveUninitialized: true,
+  resave: true
+}));
+
+//initialize passport and flash
+app.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
 
 // route redirects
 app.use('/', index);
