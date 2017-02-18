@@ -57,16 +57,20 @@ router.get('/login', (req, res, next) => {
 router.post('/login', passport.authenticate('local', {
   successRedirect: '/games',
   failureRedirect: '/login',
-  failureFlash: req.flash('loginMessage', 'Incorrect Username / Password')
+  failureFlash: ""//req.flash('loginMessage', 'Incorrect Username / Password')
 }));
 
 // GET /register - render the registration view
 router.get('/register', (req, res, next) => {
   //check to see if the user is not already logged index
   if(!req.user) {
-
-    //TODO
-    
+    // render the registration page
+    res.render('auth/register', {
+      title: 'Register',
+      games: '',
+      messages: req.flash('registerMessage'),
+      displayName: req.user ? req.user.displayName : ''
+    });
   } else {
     return res.redirect('/games');// redirect to games list
   }
@@ -74,7 +78,33 @@ router.get('/register', (req, res, next) => {
 
 // POST /register - process the registration submission
 router.post('/register', (req, res, next) => {
+  User.register(
+    new User ({
+      username: req.body.username,
+      //password: req.body.password,
+      email: req.body.email,
+      displayName: req.body.displayName
+    }),
+    req.body.password,
+    (err) => {
+      if(err) {
+        console.log('Error inserting new user');
+        if(err.name == "UserExistsError") {
+          req.flash('registerMessage', 'Registration Error: User Already Exists');
+        }
 
+        return  res.render('auth/register', {
+          title: 'Register',
+          games: '',
+          messages: req.flash('registerMessage'),
+          displayName: req.user ? req.user.displayName : ''
+        });
+      }
+      // if registration is successful
+      return passport.authenticate('local')(req, res, () => {
+        res.redirect('/games');
+      });
+    });
 });
 
 // GET /logout - process the logout request
