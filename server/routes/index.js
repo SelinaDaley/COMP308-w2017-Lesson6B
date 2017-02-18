@@ -4,16 +4,16 @@ let router = express.Router();
 let mongoose = require('mongoose');
 let passport = require('passport');
 
-// define the user models
+// define the user model
 let UserModel = require('../models/users');
-let User = UserModel.User;// alias for User Model - User object
+let User = UserModel.User; // alias for User Model - User object
 
 // define the game model
 let game = require('../models/games');
 
 // create a function to check if the user is authenticated
 function requireAuth(req, res, next) {
-  // check if the user is logged index
+  // check if the user is logged in
   if(!req.isAuthenticated()) {
     return res.redirect('/login');
   }
@@ -24,7 +24,8 @@ function requireAuth(req, res, next) {
 router.get('/', (req, res, next) => {
   res.render('content/index', {
     title: 'Home',
-    games: ''
+    games: '',
+    displayName: req.user ? req.user.displayName : ''
    });
 });
 
@@ -32,24 +33,25 @@ router.get('/', (req, res, next) => {
 router.get('/contact', (req, res, next) => {
   res.render('content/contact', {
     title: 'Contact',
-    games: ''
+    games: '',
+    displayName: req.user ? req.user.displayName : ''
    });
 });
 
 // GET /login - render the login view
-router.get('/login', (req, res, next) => {
-  // check to see if the user is not already logged index
+router.get('/login', (req, res, next)=>{
+  // check to see if the user is not already logged in
   if(!req.user) {
     // render the login page
     res.render('auth/login', {
-      title: 'Login',
+      title: "Login",
       games: '',
       messages: req.flash('loginMessage'),
       displayName: req.user ? req.user.displayName : ''
     });
     return;
   } else {
-    return res.redirect('/games');// redirect to games list
+    return res.redirect('/games'); // redirect to games list
   }
 });
 
@@ -57,29 +59,30 @@ router.get('/login', (req, res, next) => {
 router.post('/login', passport.authenticate('local', {
   successRedirect: '/games',
   failureRedirect: '/login',
-  failureFlash: ""//req.flash('loginMessage', 'Incorrect Username / Password')
+  failureFlash: 'Incorrect Username / Password'
 }));
 
 // GET /register - render the registration view
-router.get('/register', (req, res, next) => {
-  //check to see if the user is not already logged index
+router.get('/register', (req, res, next)=>{
+   // check to see if the user is not already logged in
   if(!req.user) {
     // render the registration page
-    res.render('auth/register', {
-      title: 'Register',
+      res.render('auth/register', {
+      title: "Register",
       games: '',
       messages: req.flash('registerMessage'),
       displayName: req.user ? req.user.displayName : ''
     });
+    return;
   } else {
-    return res.redirect('/games');// redirect to games list
+    return res.redirect('/games'); // redirect to games list
   }
 });
 
-// POST /register - process the registration submission
-router.post('/register', (req, res, next) => {
+// POST / register - process the registration submission
+router.post('/register', (req, res, next)=>{
   User.register(
-    new User ({
+    new User({
       username: req.body.username,
       //password: req.body.password,
       email: req.body.email,
@@ -92,25 +95,24 @@ router.post('/register', (req, res, next) => {
         if(err.name == "UserExistsError") {
           req.flash('registerMessage', 'Registration Error: User Already Exists');
         }
-
-        return  res.render('auth/register', {
-          title: 'Register',
+        return res.render('auth/register', {
+          title: "Register",
           games: '',
           messages: req.flash('registerMessage'),
           displayName: req.user ? req.user.displayName : ''
         });
       }
       // if registration is successful
-      return passport.authenticate('local')(req, res, () => {
+      return passport.authenticate('local')(req, res, ()=>{
         res.redirect('/games');
       });
     });
 });
 
 // GET /logout - process the logout request
-router.post('/logout', (req, res, next) => {
-req.logout();
-res.redirect('/'); // redirect to the home page
+router.get('/logout', (req, res, next)=>{
+  req.logout();
+  res.redirect('/'); // redirect to the home page
 });
 
 module.exports = router;
