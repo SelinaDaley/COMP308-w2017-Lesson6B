@@ -1,12 +1,27 @@
+// modules required for routing
 let express = require('express');
 let router = express.Router();
 let mongoose = require('mongoose');
+let passport = require('passport');
 
-// game object created from the Schema / model
+// define the user models
+let UserModel = require('../models/users');
+let User = UserModel.User;// alias for User Model - User object
+
+// define the game modell
 let game = require('../models/games');
 
+// create a function to check if the user is authenticated
+function requireAuth(req, res, next) {
+  // check if the user is logged index
+  if(!req.isAuthenticated()) {
+    return res.redirect('/login');
+  }
+  next();
+}
+
 /* GET games List page. READ */
-router.get('/', (req, res, next) => {
+router.get('/', requireAuth, (req, res, next) => {
   // find all games in the games collection
   game.find( (err, games) => {
     if (err) {
@@ -23,7 +38,7 @@ router.get('/', (req, res, next) => {
 });
 
 //  GET the Game Details page in order to add a new Game
-router.get('/add', (req, res, next) => {
+router.get('/add', requireAuth, (req, res, next) => {
   res.render('games/details', {
     title: "Add a new Game",
     games: ''
@@ -31,7 +46,7 @@ router.get('/add', (req, res, next) => {
 });
 
 // POST process the Game Details page and create a new Game - CREATE
-router.post('/add', (req, res, next) => {
+router.post('/add', requireAuth, (req, res, next) => {
 
     let newGame = game({
       "name": req.body.name,
@@ -50,27 +65,33 @@ router.post('/add', (req, res, next) => {
 });
 
 // GET the Game Details page in order to edit a new Game
-router.get('/:id', (req, res, next) => {
-    // get a reference to the id from the url
-    let id = req.params.id;
+router.get('/:id', requireAuth, (req, res, next) => {
 
-    // find one game by its id
-    game.findById(id, (err, games) => {
-      if(err) {
-        console.log(err);
-        res.end(error);
-      } else {
-        // show the game details view
-        res.render('games/details', {
-            title: 'Game Details',
-            games: games
-        });
-      }
-    });
+    try {
+      // get a reference to the id from the url
+      let id = mongoose.Types.ObjectId.createFromHexString(req.params.id);
+
+        // find one game by its id
+      game.findById(id, (err, games) => {
+        if(err) {
+          console.log(err);
+          res.end(error);
+        } else {
+          // show the game details view
+          res.render('games/details', {
+              title: 'Game Details',
+              games: games
+          });
+        }
+      });
+    } catch (err) {
+      console.log(err);
+      res.redirect('/errors/404');
+    }
 });
 
 // POST - process the information passed from the details form and update the document
-router.post('/:id', (req, res, next) => {
+router.post('/:id', requireAuth, (req, res, next) => {
   // get a reference to the id from the url
     let id = req.params.id;
 
@@ -94,7 +115,7 @@ router.post('/:id', (req, res, next) => {
 });
 
 // GET - process the delete by user id
-router.get('/delete/:id', (req, res, next) => {
+router.get('/delete/:id', requireAuth, (req, res, next) => {
   // get a reference to the id from the url
     let id = req.params.id;
 

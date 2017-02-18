@@ -60,6 +60,13 @@ app.use(passport.session());
 app.use('/', index);
 app.use('/games', games)
 
+// Passport User Configuration
+let UserModel = require('./models/users');
+let User = UserModel.User; // alias for the User Model - User object
+passport.use(User.createStrategy());
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
   let err = new Error('Not Found');

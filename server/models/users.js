@@ -2,6 +2,7 @@
 let mongoose = require('mongoose');
 let Schema = mongoose.Schema; // alias for mongoose Schema
 let passportLocalMongoose = require('passport-local-mongoose');
+
 let UserSchema = new Schema({
     username: {
         type: String,
